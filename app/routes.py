@@ -1,8 +1,9 @@
-from app import webserver
+from __init__ import webserver
 from flask import request, jsonify
 
 import os
 import json
+
 
 # Example endpoint definition
 @webserver.route('/api/post_endpoint', methods=['POST'])
@@ -22,6 +23,7 @@ def post_endpoint():
         # Method Not Allowed
         return jsonify({"error": "Method not allowed"}), 405
 
+
 @webserver.route('/api/get_results/<job_id>', methods=['GET'])
 def get_response(job_id):
     print(f"JobID is {job_id}")
@@ -38,6 +40,7 @@ def get_response(job_id):
     # If not, return running status
     return jsonify({'status': 'NotImplemented'})
 
+
 @webserver.route('/api/states_mean', methods=['POST'])
 def states_mean_request():
     # Get request data
@@ -50,6 +53,7 @@ def states_mean_request():
     # Return associated job_id
 
     return jsonify({"status": "NotImplemented"})
+
 
 @webserver.route('/api/state_mean', methods=['POST'])
 def state_mean_request():
@@ -72,6 +76,7 @@ def best5_request():
 
     return jsonify({"status": "NotImplemented"})
 
+
 @webserver.route('/api/worst5', methods=['POST'])
 def worst5_request():
     # TODO
@@ -81,6 +86,7 @@ def worst5_request():
     # Return associated job_id
 
     return jsonify({"status": "NotImplemented"})
+
 
 @webserver.route('/api/global_mean', methods=['POST'])
 def global_mean_request():
@@ -92,6 +98,7 @@ def global_mean_request():
 
     return jsonify({"status": "NotImplemented"})
 
+
 @webserver.route('/api/diff_from_mean', methods=['POST'])
 def diff_from_mean_request():
     # TODO
@@ -101,6 +108,7 @@ def diff_from_mean_request():
     # Return associated job_id
 
     return jsonify({"status": "NotImplemented"})
+
 
 @webserver.route('/api/state_diff_from_mean', methods=['POST'])
 def state_diff_from_mean_request():
@@ -112,6 +120,7 @@ def state_diff_from_mean_request():
 
     return jsonify({"status": "NotImplemented"})
 
+
 @webserver.route('/api/mean_by_category', methods=['POST'])
 def mean_by_category_request():
     # TODO
@@ -122,6 +131,7 @@ def mean_by_category_request():
 
     return jsonify({"status": "NotImplemented"})
 
+
 @webserver.route('/api/state_mean_by_category', methods=['POST'])
 def state_mean_by_category_request():
     # TODO
@@ -131,6 +141,7 @@ def state_mean_by_category_request():
     # Return associated job_id
 
     return jsonify({"status": "NotImplemented"})
+
 
 # You can check localhost in your browser to see what this displays
 @webserver.route('/')
@@ -146,6 +157,7 @@ def index():
 
     msg += paragraphs
     return msg
+
 
 def get_defined_routes():
     routes = []

@@ -2,6 +2,7 @@ from queue import Queue
 from threading import Thread, Event
 import time
 
+
 class ThreadPool:
     def __init__(self):
         # You must implement a ThreadPool of TaskRunners
@@ -13,6 +14,7 @@ class ThreadPool:
         #   * create more threads than the hardware concurrency allows
         #   * recreate threads for each task
         pass
+
 
 class TaskRunner(Thread):
     def __init__(self):
