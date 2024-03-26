@@ -1,4 +1,4 @@
-from __init__ import webserver
+from app import webserver
 from flask import request, jsonify
 
 import os
