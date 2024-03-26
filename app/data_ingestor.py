@@ -1,10 +1,47 @@
 import os
 import json
+import csv
 
 
 class DataIngestor:
     def __init__(self, csv_path: str):
         # TODO: Read csv from csv_path
+
+        self.questions_dict = {}
+
+        with open(csv_path, 'r') as csvfile:
+            csvreader = csv.DictReader(csvfile)
+
+            for row in csvreader:
+                state_name = row['LocationDesc']
+                year = row['YearStart']
+                question = row['Question']
+                data_value = row['Data_Value']
+                stratification_category = row['StratificationCategory1']
+                stratification = row['Stratification1']
+
+                if question not in self.questions_dict:
+                    self.questions_dict[question] = {}
+
+                states_dict = self.questions_dict[question]
+
+                if state_name not in states_dict:
+                    states_dict[state_name] = {}
+
+                stratification_categories_dict = states_dict[state_name]
+
+                if stratification_category not in stratification_categories_dict:
+                    stratification_categories_dict[stratification_category] = {}
+
+                stratifications_dict = stratification_categories_dict[stratification_category]
+
+                if stratification not in stratifications_dict:
+                    stratifications_dict[stratification] = {}
+
+                data_values_dict = stratifications_dict[stratification]
+
+                if year not in data_values_dict:
+                    data_values_dict[year] = data_value
 
         self.questions_best_is_min = [
             'Percent of adults aged 18 years and older who have an overweight classification',
