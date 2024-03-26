@@ -5,7 +5,6 @@ import csv
 
 class DataIngestor:
     def __init__(self, csv_path: str):
-        # TODO: Read csv from csv_path
 
         self.questions_dict = {}
 
