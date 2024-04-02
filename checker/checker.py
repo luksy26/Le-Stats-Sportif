@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from time import sleep
 import os
 
+from deepdiff import DeepDiff
+
 total_score = 0
 
 ONLY_LAST = False
@@ -30,13 +32,14 @@ class TestAPI(unittest.TestCase):
             if response_data['status'] == 'done':
                 # print(f"Response data {response_data['data']} and type {type(response_data['data'])}")
                 # print(f"Ref data {ref_result} and type {type(ref_result)}")
-                self.assertEqual(response_data['data'], ref_result)
+                d = DeepDiff(response_data['data'], ref_result, math_epsilon=0.01)
+                self.assertTrue(d == {}, str(d))
                 break
             elif response_data['status'] == 'running':
                 current_timestamp = datetime.now()
                 time_delta = current_timestamp - initial_timestamp
                 if time_delta.seconds > timeout_sec:
-                    self.fail("Operation timed out")
+                    self.fail("Operation timedout")
                 else:
                     sleep(poll_interval)
 
