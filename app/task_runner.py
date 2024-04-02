@@ -18,18 +18,18 @@ class ThreadPool:
 
         self.num_threads = int(os.getenv("TP_NUM_OF_THREADS", os.cpu_count() or 1))
         self.task_queue = queue.Queue()
-        self.result_queue = queue.Queue()
+        self.result_list = []
         self.shutdown_event = threading.Event()
         self.task_runners = []
 
         # Create and start TaskRunner threads
         for _ in range(self.num_threads):
-            task_runner = TaskRunner(self.task_queue, self.result_queue, self.shutdown_event)
+            task_runner = TaskRunner(self.task_queue, self.result_list, self.shutdown_event)
             task_runner.start()
             self.task_runners.append(task_runner)
 
-    def submit(self, task, *args, **kwargs):
-        self.task_queue.put((task, args, kwargs))
+    def submit(self, task):
+        self.task_queue.put(task)
 
     def shutdown(self):
         self.shutdown_event.set()
@@ -44,10 +44,10 @@ class ThreadPool:
 
 
 class TaskRunner(Thread):
-    def __init__(self, task_queue, result_queue, shutdown_event):
+    def __init__(self, task_queue, result_list, shutdown_event):
         super().__init__()
         self.task_queue = task_queue
-        self.result_queue = result_queue
+        self.result_list = result_list
         self.shutdown_event = shutdown_event
 
     def run(self):
@@ -59,9 +59,10 @@ class TaskRunner(Thread):
             except queue.Empty:
                 continue  # If no task is available, check again
             # Execute the job and save the result to disk
-            result = self._execute_task(*task)
-            self.result_queue.put(result)
-            self.task_queue.task_done()
+            result = self._execute_task(task)
+            self.result_list.append(result)
 
-    def _execute_task(self, func, args, kwargs):
-        return func(*args, **kwargs)
+    def _execute_task(self, task):
+        (job_id, compute_function, *args) = task
+        result = compute_function(*args)
+        return job_id, result
