@@ -1,11 +1,21 @@
+"""
+Provides a ThreadPool class for managing asynchronous task execution.
+"""
+
 import os
 import queue
-import threading
 import time
-from threading import Thread
+from threading import Thread, Event
 
 
 class ThreadPool:
+    """
+    Manages a pool of worker threads
+
+    - Utilizes environment variable 'TP_NUM_OF_THREADS' to configure thread count
+    (default: CPU cores).
+    - Provides methods to submit tasks, wait for completion, and shut down gracefully.
+    """
     def __init__(self):
         # You must implement a ThreadPool of TaskRunners
         # Your ThreadPool should check if an environment variable TP_NUM_OF_THREADS is defined
@@ -19,7 +29,7 @@ class ThreadPool:
         self.num_threads = int(os.getenv("TP_NUM_OF_THREADS", os.cpu_count() or 1))
         self.task_queue = queue.Queue()
         self.result_list = []
-        self.shutdown_event = threading.Event()
+        self.shutdown_event = Event()
         self.task_runners = []
 
         # Create and start TaskRunner threads
@@ -29,9 +39,19 @@ class ThreadPool:
             self.task_runners.append(task_runner)
 
     def submit(self, task):
+        """
+        Submits a task (function, arguments) to the queue for asynchronous execution.
+        """
         self.task_queue.put(task)
 
     def shutdown(self):
+        """
+        Initiates a graceful shutdown of the thread pool.
+
+        - Signals worker threads to stop accepting new tasks.
+        - Waits for all pending tasks to complete.
+        - Joins worker threads to ensure proper termination.
+        """
         self.shutdown_event.set()
         # Wait for tasks to finish before joining threads
         self.wait_for_completion()
@@ -39,11 +59,23 @@ class ThreadPool:
             task_runner.join()
 
     def wait_for_completion(self):
+        """
+        Waits for all tasks currently in the queue to be processed before returning.
+
+        - Polls the task queue to check if it's empty.
+        - Introduces a short sleep to avoid busy waiting.
+        """
         while not self.task_queue.empty():
             time.sleep(0.1)  # Short wait to avoid busy waiting
 
 
 class TaskRunner(Thread):
+    """
+    Worker thread responsible for retrieving tasks from the queue and executing them.
+
+    - Continuously checks for tasks until signaled to shut down.
+    - Executes retrieved tasks and stores results in a shared list.
+    """
     def __init__(self, task_queue, result_list, shutdown_event):
         super().__init__()
         self.task_queue = task_queue
@@ -62,7 +94,8 @@ class TaskRunner(Thread):
             result = self._execute_task(task)
             self.result_list.append(result)
 
-    def _execute_task(self, task):
+    @staticmethod
+    def _execute_task(task):
         (job_id, compute_function, *args) = task
         result = compute_function(*args)
         return job_id, result
