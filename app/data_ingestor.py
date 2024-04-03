@@ -51,7 +51,7 @@ class DataIngestor:
         ]
 
         self.questions_best_is_max = [
-            'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)',
+            'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or75 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)',
             'Percent of adults who achieve at least 150 minutes a week of moderate-intensity aerobic physical activity or 75 minutes a week of vigorous-intensity aerobic physical activity and engage in muscle-strengthening activities on 2 or more days a week',
             'Percent of adults who achieve at least 300 minutes a week of moderate-intensity aerobic physical activity or 150 minutes a week of vigorous-intensity aerobic activity (or an equivalent combination)',
             'Percent of adults who engage in muscle-strengthening activities on 2 or more days a week',

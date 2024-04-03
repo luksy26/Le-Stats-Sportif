@@ -100,7 +100,7 @@ def state_mean_request():
 
 def calculate_state_mean(question, state):
     result = {}
-    states_dict = states_dict = ingested_data.questions_dict[question]
+    states_dict = ingested_data.questions_dict[question]
     stratification_categories_dict = states_dict[state]
     sum_values = 0
     no_values = 0
@@ -218,41 +218,88 @@ def calculate_diff_from_mean(question):
 
 @webserver.route('/api/state_diff_from_mean', methods=['POST'])
 def state_diff_from_mean_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
+    state = data["state"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_state_diff_from_mean, question, state)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_state_diff_from_mean(question, state):
+    global_mean = calculate_global_mean(question)
+    state_mean = calculate_state_mean(question, state)
+
+    state_diff_from_mean = {state: global_mean["global_mean"] - state_mean[state]}
+    return state_diff_from_mean
 
 
 @webserver.route('/api/mean_by_category', methods=['POST'])
 def mean_by_category_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_mean_by_category, question)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_mean_by_category(question):
+    result = {}
+    states_dict = ingested_data.questions_dict[question]
+    for state, stratification_categories_dict in states_dict.items():
+        for stratification_category, stratifications_dict in stratification_categories_dict.items():
+            for stratification, data_values_dict in stratifications_dict.items():
+                sum_values = 0
+                no_values = 0
+                for year, value in data_values_dict.items():
+                    sum_values += float(value)
+                    no_values += 1
+                if no_values > 0 and stratification_category != "" and stratification != "":
+                    new_key = "(\'" + state + "\', \'" + stratification_category + "\', \'" + stratification + "\')"
+                    result[new_key] = sum_values / no_values
+    return result
 
 
 @webserver.route('/api/state_mean_by_category', methods=['POST'])
 def state_mean_by_category_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
+    state = data["state"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_state_mean_by_category, question, state)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_state_mean_by_category(question, state):
+    result = {state: {}}
+    states_dict = ingested_data.questions_dict[question]
+    stratification_categories_dict = states_dict[state]
+    for stratification_category, stratifications_dict in stratification_categories_dict.items():
+        for stratification, data_values_dict in stratifications_dict.items():
+            sum_values = 0
+            no_values = 0
+            for year, value in data_values_dict.items():
+                sum_values += float(value)
+                no_values += 1
+            if no_values > 0 and stratification_category != "" and stratification != "":
+                new_key = "(\'" + stratification_category + "\', \'" + stratification + "\')"
+                result[state][new_key] = sum_values / no_values
+    return result
 
 
 # You can check localhost in your browser to see what this displays
