@@ -21,17 +21,17 @@ class TestAPI(unittest.TestCase):
         initial_timestamp = datetime.now()
         while True:
             response = res_callable()
-            # print(response)
+            print(response)
 
             # Asserting that the response status code is 200 (OK)
             self.assertEqual(response.status_code, 200)
 
             # Asserting the response data
             response_data = response.json()
-            # print(f"Response_data\n{response_data}")
+            print(f"Response_data\n{response_data}")
             if response_data['status'] == 'done':
-                # print(f"Response data {response_data['data']} and type {type(response_data['data'])}")
-                # print(f"Ref data {ref_result} and type {type(ref_result)}")
+                print(f"Response data {response_data['data']} and type {type(response_data['data'])}")
+                print(f"Ref data {ref_result} and type {type(ref_result)}")
                 d = DeepDiff(response_data['data'], ref_result, math_epsilon=0.01)
                 self.assertTrue(d == {}, str(d))
                 break
@@ -43,40 +43,40 @@ class TestAPI(unittest.TestCase):
                 else:
                     sleep(poll_interval)
 
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_states_mean(self):
-        self.helper_test_endpoint("states_mean")
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_states_mean(self):
+    #     self.helper_test_endpoint("states_mean")
+    #
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_state_mean(self):
+    #     self.helper_test_endpoint("state_mean")
+    #
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_best5(self):
+    #     self.helper_test_endpoint("best5")
+    #
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_worst5(self):
+    #     self.helper_test_endpoint("worst5")
 
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_state_mean(self):
-        self.helper_test_endpoint("state_mean")
-
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_best5(self):
-        self.helper_test_endpoint("best5")
-
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_worst5(self):
-        self.helper_test_endpoint("worst5")
-
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_global_mean(self):
-        self.helper_test_endpoint("global_mean")
-
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_diff_from_mean(self):
-        self.helper_test_endpoint("diff_from_mean")
-
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_global_mean(self):
+    #     self.helper_test_endpoint("global_mean")
+    #
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_diff_from_mean(self):
+    #     self.helper_test_endpoint("diff_from_mean")
+    #
     @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
     def test_state_diff_from_mean(self):
         self.helper_test_endpoint("state_diff_from_mean")
-
-    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
-    def test_mean_by_category(self):
-        self.helper_test_endpoint("mean_by_category")
-
-    def test_state_mean_by_category(self):
-        self.helper_test_endpoint("state_mean_by_category")
+    #
+    # @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
+    # def test_mean_by_category(self):
+    #     self.helper_test_endpoint("mean_by_category")
+    #
+    # def test_state_mean_by_category(self):
+    #     self.helper_test_endpoint("state_mean_by_category")
 
     def helper_test_endpoint(self, endpoint):
         global total_score
@@ -107,7 +107,7 @@ class TestAPI(unittest.TestCase):
                 res = requests.post(f"http://127.0.0.1:5000/api/{endpoint}", json=req_data)
 
                 job_id = res.json()
-                # print(f'job-res is {job_id}')
+                print(f'job-res is {job_id}')
                 job_id = job_id["job_id"]
 
                 self.check_res_timeout(

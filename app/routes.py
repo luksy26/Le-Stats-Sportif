@@ -1,3 +1,4 @@
+import heapq
 from app import webserver
 from flask import request, jsonify
 # from __init__ import webserver
@@ -57,7 +58,6 @@ def states_mean_request():
     # Get request data
     data = request.json
     question = data["question"]
-
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_states_mean, question)
     threadpool.submit(new_task)
@@ -83,71 +83,137 @@ def calculate_states_mean(question):
     return dict(sorted(result.items(), key=lambda item: item[1]))
 
 
-# print(calculate_states_mean("Percent of adults aged 18 years and older who have an overweight classification"))
-
-
 @webserver.route('/api/state_mean', methods=['POST'])
 def state_mean_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
+    state = data["state"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_state_mean, question, state)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_state_mean(question, state):
+    result = {}
+    states_dict = states_dict = ingested_data.questions_dict[question]
+    stratification_categories_dict = states_dict[state]
+    sum_values = 0
+    no_values = 0
+    for stratification_category, stratifications_dict in stratification_categories_dict.items():
+        for stratification, data_values_dict in stratifications_dict.items():
+            for year, value in data_values_dict.items():
+                sum_values += float(value)
+                no_values += 1
+    if no_values > 0:
+        result[state] = sum_values / no_values
+    return result
 
 
 @webserver.route('/api/best5', methods=['POST'])
 def best5_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_best5, question)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_best5(question):
+    temp_result = calculate_states_mean(question)
+    if question in ingested_data.questions_best_is_max:
+        result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
+        sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
+    else:
+        result = heapq.nsmallest(5, temp_result.items(), key=lambda item: item[1])
+        sorted_result = dict(sorted(result, key=lambda item: item[1]))
+    return sorted_result
 
 
 @webserver.route('/api/worst5', methods=['POST'])
 def worst5_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_worst5, question)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_worst5(question):
+    temp_result = calculate_states_mean(question)
+    if question in ingested_data.questions_best_is_min:
+        result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
+        sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
+    else:
+        result = heapq.nsmallest(5, temp_result.items(), key=lambda item: item[1])
+        sorted_result = dict(sorted(result, key=lambda item: item[1]))
+    return sorted_result
 
 
 @webserver.route('/api/global_mean', methods=['POST'])
 def global_mean_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_global_mean, question)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_global_mean(question):
+    result = {}
+    sum_values = 0
+    no_values = 0
+    states_dict = ingested_data.questions_dict[question]
+    for state, stratification_categories_dict in states_dict.items():
+        for stratification_category, stratifications_dict in stratification_categories_dict.items():
+            for stratification, data_values_dict in stratifications_dict.items():
+                for year, value in data_values_dict.items():
+                    sum_values += float(value)
+                    no_values += 1
+    result["global_mean"] = 0
+    if no_values > 0:
+        result["global_mean"] = sum_values / no_values
+    return result
 
 
 @webserver.route('/api/diff_from_mean', methods=['POST'])
 def diff_from_mean_request():
-    # TODO
     # Get request data
+    data = request.json
+    question = data["question"]
     # Register job. Don't wait for task to finish
+    new_task = (webserver.job_counter, calculate_diff_from_mean, question)
+    threadpool.submit(new_task)
     # Increment job_id counter
-    # Return associated job_id
-
-    job_id = webserver.job_counter
     webserver.job_counter += 1
-    return jsonify({"job_id": job_id})
+    # Return associated job_id
+    return jsonify({"job_id": new_task[0]})
+
+
+def calculate_diff_from_mean(question):
+    global_mean = calculate_global_mean(question)
+    states_mean = calculate_states_mean(question)
+
+    return {key: global_mean["global_mean"] - states_mean[key] for key, value in states_mean.items()}
 
 
 @webserver.route('/api/state_diff_from_mean', methods=['POST'])

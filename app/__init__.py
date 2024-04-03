@@ -13,8 +13,8 @@ webserver.tasks_runner = ThreadPool()
 # webserver.data_ingestor = DataIngestor("../nutrition_activity_obesity_usa_subset.csv")
 webserver.data_ingestor = DataIngestor("./nutrition_activity_obesity_usa_subset.csv")
 
-with open('formatted_dict.txt', 'w') as file:
-    pprint.pprint(webserver.data_ingestor.questions_dict, stream=file, compact=True)
+# with open('formatted_dict.txt', 'w') as file:
+#     pprint.pprint(webserver.data_ingestor.questions_dict, stream=file, compact=True)
 
 webserver.job_counter = 1
 
