@@ -13,11 +13,9 @@ Requires webserver & data ingestion modules to be configured.
 import heapq
 from flask import request, jsonify
 from app import webserver
+
+
 # from __init__ import webserver
-
-threadpool = webserver.tasks_runner
-ingested_data = webserver.data_ingestor
-
 
 # Example endpoint definition
 @webserver.route('/api/post_endpoint', methods=['POST'])
@@ -79,7 +77,7 @@ def task_data_for(job_id):
     Returns:
         Any: The data associated with the job ID (if found), None otherwise.
     """
-    for task in threadpool.result_list:
+    for task in webserver.tasks_runner.result_list:
         if task[0] == job_id:
             return task[1]
     return None
@@ -103,7 +101,7 @@ def states_mean_request():
     question = data["question"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_states_mean, question)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -123,7 +121,7 @@ def calculate_states_mean(question):
             States are sorted by mean value in ascending order.
     """
     result = {}
-    states_dict = ingested_data.questions_dict[question]
+    states_dict = webserver.data_ingestor.questions_dict[question]
     for state, stratification_categories_dict in states_dict.items():
         sum_values = 0
         no_values = 0
@@ -156,7 +154,7 @@ def state_mean_request():
     state = data["state"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_state_mean, question, state)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -177,7 +175,7 @@ def calculate_state_mean(question, state):
             question and state.
     """
     result = {}
-    states_dict = ingested_data.questions_dict[question]
+    states_dict = webserver.data_ingestor.questions_dict[question]
     stratification_categories_dict = states_dict[state]
     sum_values = 0
     no_values = 0
@@ -210,7 +208,7 @@ def best5_request():
     question = data["question"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_best5, question)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -228,7 +226,7 @@ def calculate_best5(question):
         dict: Top/bottom 5 states with mean values (sorted).
     """
     temp_result = calculate_states_mean(question)
-    if question in ingested_data.questions_best_is_max:
+    if question in webserver.data_ingestor.questions_best_is_max:
         result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
     else:
@@ -252,7 +250,7 @@ def worst5_request():
     question = data["question"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_worst5, question)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -272,7 +270,7 @@ def calculate_worst5(question):
         dict: Bottom 5 states with mean values (sorted).
     """
     temp_result = calculate_states_mean(question)
-    if question in ingested_data.questions_best_is_min:
+    if question in webserver.data_ingestor.questions_best_is_min:
         result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
     else:
@@ -299,7 +297,7 @@ def global_mean_request():
     question = data["question"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_global_mean, question)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -320,7 +318,7 @@ def calculate_global_mean(question):
     result = {}
     sum_values = 0
     no_values = 0
-    states_dict = ingested_data.questions_dict[question]
+    states_dict = webserver.data_ingestor.questions_dict[question]
     for _, stratification_categories_dict in states_dict.items():
         for _, stratifications_dict in stratification_categories_dict.items():
             for _, data_values_dict in stratifications_dict.items():
@@ -352,7 +350,7 @@ def diff_from_mean_request():
     question = data["question"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_diff_from_mean, question)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -394,7 +392,7 @@ def state_diff_from_mean_request():
     state = data["state"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_state_diff_from_mean, question, state)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -437,7 +435,7 @@ def mean_by_category_request():
     question = data["question"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_mean_by_category, question)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -461,7 +459,7 @@ def calculate_mean_by_category(question):
         (state, stratification category, stratification) and their corresponding mean values.
     """
     result = {}
-    states_dict = ingested_data.questions_dict[question]
+    states_dict = webserver.data_ingestor.questions_dict[question]
     for state, stratification_categories_dict in states_dict.items():
         for stratification_category, stratifications_dict in stratification_categories_dict.items():
             for stratification, data_values_dict in stratifications_dict.items():
@@ -497,7 +495,7 @@ def state_mean_by_category_request():
     state = data["state"]
     # Register job. Don't wait for task to finish
     new_task = (webserver.job_counter, calculate_state_mean_by_category, question, state)
-    threadpool.submit(new_task)
+    webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
     # Return associated job_id
@@ -521,7 +519,7 @@ def calculate_state_mean_by_category(question, state):
         mean values for category combinations (stratification category, stratification).
     """
     result = {state: {}}
-    states_dict = ingested_data.questions_dict[question]
+    states_dict = webserver.data_ingestor.questions_dict[question]
     stratification_categories_dict = states_dict[state]
     for stratification_category, stratifications_dict in stratification_categories_dict.items():
         for stratification, data_values_dict in stratifications_dict.items():
