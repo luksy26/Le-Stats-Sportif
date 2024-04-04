@@ -9,9 +9,10 @@ See API endpoints for details (index route displays list).
 
 Requires webserver & data ingestion modules to be configured.
 """
-import json
 import os
 import heapq
+import pickle
+
 from flask import request, jsonify
 from app import webserver
 
@@ -70,19 +71,20 @@ def get_response(job_id):
 
 def task_data_for(job_id):
     """
-    Fetches task data from job_id.json, or None if not found.
+    Fetches task data (a dictionary) from job_id.pkl,
+    or None if not found.
     """
     results_dir = webserver.tasks_runner.results_dir
 
-    # Construct the filename with .json extension
-    filename = os.path.join(results_dir, f"{job_id}.json")
+    # Construct the filename with .pkl extension
+    filename = os.path.join(results_dir, f"{job_id}.pkl")
 
     # Check if the file exists
     if not os.path.exists(filename):
         return None
-    with open(filename, 'r') as f:
-        # Load the JSON data from the file
-        return json.load(f)
+    with open(filename, 'rb') as job_file:
+        # Load the PKL data from the file
+        return pickle.load(job_file)
 
 
 @webserver.route('/api/states_mean', methods=['POST'])

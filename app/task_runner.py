@@ -2,8 +2,8 @@
 Provides a ThreadPool class for managing asynchronous task execution.
 """
 
-import json
 import os
+import pickle
 import queue
 import time
 from threading import Thread, Event
@@ -71,6 +71,9 @@ class ThreadPool:
             time.sleep(0.1)  # Short wait to avoid busy waiting
 
     def update_results_dir(self, results_dir):
+        """
+        Updates the results directory for the thread pool and its task runners.
+        """
         self.results_dir = results_dir
         for task_runner in self.task_runners:
             task_runner.results_dir = results_dir
@@ -100,12 +103,10 @@ class TaskRunner(Thread):
                 continue  # If no task is available, check again
             # Execute the job and save the result to disk
             job_id, result = self._execute_task(task)
-            filename = os.path.join(self.results_dir, f"{job_id}.json")
+            filename = os.path.join(self.results_dir, f"{job_id}.pkl")
 
-            with open(filename, 'w') as f:
-                json.dump(result, f)
-
-            print(f"File '{filename} created successfully")
+            with open(filename, 'wb') as job_file:
+                pickle.dump(result, job_file)
 
     @staticmethod
     def _execute_task(task):

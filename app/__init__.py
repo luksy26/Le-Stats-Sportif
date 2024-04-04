@@ -44,4 +44,3 @@ print("Empty 'results' directory created successfully")
 webserver.tasks_runner.update_results_dir(results_dir)
 
 from app import routes
-
