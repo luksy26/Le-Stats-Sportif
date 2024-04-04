@@ -100,6 +100,9 @@ def states_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -152,6 +155,9 @@ def state_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -207,6 +213,9 @@ def best5_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -249,6 +258,9 @@ def worst5_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -296,6 +308,9 @@ def global_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -349,6 +364,9 @@ def diff_from_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -390,6 +408,9 @@ def state_diff_from_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -434,6 +455,9 @@ def mean_by_category_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -493,6 +517,9 @@ def state_mean_by_category_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    # check if the threadpool is accepting requests
+    if webserver.tasks_runner.is_shutting_down():
+        return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
@@ -536,6 +563,18 @@ def calculate_state_mean_by_category(question, state):
                 new_key = "(\'" + stratification_category + "\', \'" + stratification + "\')"
                 result[state][new_key] = sum_values / no_values
     return result
+
+
+@webserver.route('/api/graceful_shutdown', methods=['GET'])
+def graceful_shutdown_request():
+    webserver.tasks_runner.shutdown()
+    return jsonify({'message': 'Graceful shutdown initiated'}), 202
+
+
+@webserver.route('/api/num_jobs', methods=['GET'])
+def num_jobs_request():
+    num_jobs = webserver.tasks_runner.no_tasks_in_queue()
+    return jsonify({'Number of tasks': num_jobs}), 200
 
 
 # You can check localhost in your browser to see what this displays

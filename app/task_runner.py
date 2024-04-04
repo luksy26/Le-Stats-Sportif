@@ -5,7 +5,6 @@ Provides a ThreadPool class for managing asynchronous task execution.
 import os
 import pickle
 import queue
-import time
 from threading import Thread, Event
 
 
@@ -55,20 +54,8 @@ class ThreadPool:
         - Joins worker threads to ensure proper termination.
         """
         self.shutdown_event.set()
-        # Wait for tasks to finish before joining threads
-        self.wait_for_completion()
         for task_runner in self.task_runners:
             task_runner.join()
-
-    def wait_for_completion(self):
-        """
-        Waits for all tasks currently in the queue to be processed before returning.
-
-        - Polls the task queue to check if it's empty.
-        - Introduces a short sleep to avoid busy waiting.
-        """
-        while not self.task_queue.empty():
-            time.sleep(0.1)  # Short wait to avoid busy waiting
 
     def update_results_dir(self, results_dir):
         """
@@ -77,6 +64,18 @@ class ThreadPool:
         self.results_dir = results_dir
         for task_runner in self.task_runners:
             task_runner.results_dir = results_dir
+
+    def is_shutting_down(self):
+        """
+        Checks if the thread pool is currently undergoing shutdown.
+        """
+        return self.shutdown_event.is_set()
+
+    def no_tasks_in_queue(self):
+        """
+        Returns the number of tasks remaining in the queue
+        """
+        return self.task_queue.qsize()
 
 
 class TaskRunner(Thread):
@@ -94,10 +93,12 @@ class TaskRunner(Thread):
         self.shutdown_event = shutdown_event
 
     def run(self):
-        # Repeat until graceful_shutdown
-        while not self.shutdown_event.is_set():
-            # Get pending job
+        while True:
+            # Stop if graceful_shutdown and there are no tasks to poll
+            if self.shutdown_event.is_set() and self.task_queue.empty():
+                return
             try:
+                # Get pending job
                 task = self.task_queue.get(timeout=1)  # Wait for a task for 1 second
             except queue.Empty:
                 continue  # If no task is available, check again
