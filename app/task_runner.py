@@ -2,6 +2,7 @@
 Provides a ThreadPool class for managing asynchronous task execution.
 """
 
+import json
 import os
 import queue
 import time
@@ -16,6 +17,7 @@ class ThreadPool:
     (default: CPU cores).
     - Provides methods to submit tasks, wait for completion, and shut down gracefully.
     """
+
     def __init__(self):
         # You must implement a ThreadPool of TaskRunners
         # Your ThreadPool should check if an environment variable TP_NUM_OF_THREADS is defined
@@ -28,13 +30,13 @@ class ThreadPool:
 
         self.num_threads = int(os.getenv("TP_NUM_OF_THREADS", os.cpu_count() or 1))
         self.task_queue = queue.Queue()
-        self.result_list = []
+        self.results_dir = ""
         self.shutdown_event = Event()
         self.task_runners = []
 
         # Create and start TaskRunner threads
         for _ in range(self.num_threads):
-            task_runner = TaskRunner(self.task_queue, self.result_list, self.shutdown_event)
+            task_runner = TaskRunner(self.task_queue, self.results_dir, self.shutdown_event)
             task_runner.start()
             self.task_runners.append(task_runner)
 
@@ -68,6 +70,11 @@ class ThreadPool:
         while not self.task_queue.empty():
             time.sleep(0.1)  # Short wait to avoid busy waiting
 
+    def update_results_dir(self, results_dir):
+        self.results_dir = results_dir
+        for task_runner in self.task_runners:
+            task_runner.results_dir = results_dir
+
 
 class TaskRunner(Thread):
     """
@@ -76,10 +83,11 @@ class TaskRunner(Thread):
     - Continuously checks for tasks until signaled to shut down.
     - Executes retrieved tasks and stores results in a shared list.
     """
-    def __init__(self, task_queue, result_list, shutdown_event):
+
+    def __init__(self, task_queue, results_dir, shutdown_event):
         super().__init__()
         self.task_queue = task_queue
-        self.result_list = result_list
+        self.results_dir = results_dir
         self.shutdown_event = shutdown_event
 
     def run(self):
@@ -91,8 +99,13 @@ class TaskRunner(Thread):
             except queue.Empty:
                 continue  # If no task is available, check again
             # Execute the job and save the result to disk
-            result = self._execute_task(task)
-            self.result_list.append(result)
+            job_id, result = self._execute_task(task)
+            filename = os.path.join(self.results_dir, f"{job_id}.json")
+
+            with open(filename, 'w') as f:
+                json.dump(result, f)
+
+            print(f"File '{filename} created successfully")
 
     @staticmethod
     def _execute_task(task):

@@ -9,7 +9,8 @@ See API endpoints for details (index route displays list).
 
 Requires webserver & data ingestion modules to be configured.
 """
-
+import json
+import os
 import heapq
 from flask import request, jsonify
 from app import webserver
@@ -69,18 +70,19 @@ def get_response(job_id):
 
 def task_data_for(job_id):
     """
-    Searches thread pool results for data associated with a job ID.
-
-    Args:
-        job_id (int): The ID of the job to search for.
-
-    Returns:
-        Any: The data associated with the job ID (if found), None otherwise.
+    Fetches task data from job_id.json, or None if not found.
     """
-    for task in webserver.tasks_runner.result_list:
-        if task[0] == job_id:
-            return task[1]
-    return None
+    results_dir = webserver.tasks_runner.results_dir
+
+    # Construct the filename with .json extension
+    filename = os.path.join(results_dir, f"{job_id}.json")
+
+    # Check if the file exists
+    if not os.path.exists(filename):
+        return None
+    with open(filename, 'r') as f:
+        # Load the JSON data from the file
+        return json.load(f)
 
 
 @webserver.route('/api/states_mean', methods=['POST'])
