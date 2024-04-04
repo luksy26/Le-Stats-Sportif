@@ -30,6 +30,7 @@ class ThreadPool:
         self.num_threads = int(os.getenv("TP_NUM_OF_THREADS", os.cpu_count() or 1))
         self.task_queue = queue.Queue()
         self.results_dir = ""
+        self.encountered_tasks = []
         self.shutdown_event = Event()
         self.task_runners = []
 
@@ -44,6 +45,7 @@ class ThreadPool:
         Submits a task (function, arguments) to the queue for asynchronous execution.
         """
         self.task_queue.put(task)
+        self.encountered_tasks.append(task[0])
 
     def shutdown(self):
         """

@@ -577,6 +577,31 @@ def num_jobs_request():
     return jsonify({'Number of tasks': num_jobs}), 200
 
 
+@webserver.route('/api/jobs', methods=['GET'])
+def jobs_request():
+    return_data = {"status": "done", "data": []}
+    results_dir = webserver.tasks_runner.results_dir
+    # Iterate through files in the results directory
+    for filename in os.listdir(results_dir):
+        # Extract job ID from filename
+        job_id = int(filename.split(".")[0])
+        return_data["data"].append({"job_id_" + str(job_id): "done"})
+
+    potential_running_jobs = webserver.tasks_runner.encountered_tasks
+
+    for job_id in potential_running_jobs:
+        key_to_search = "job_id_" + str(job_id)
+        if {key_to_search: "done"} not in return_data["data"]:
+            return_data["data"].append({key_to_search: "running"})
+
+    # sorts the list of dictionaries by the job_id (obtained by split)
+    # in the key of the first item in each dictionary
+    return_data["data"] = sorted(return_data["data"],
+                                 key=lambda item: int(list(item.keys())[0].split("_")[2]))
+
+    return jsonify(return_data), 200
+
+
 # You can check localhost in your browser to see what this displays
 @webserver.route('/')
 @webserver.route('/index')
