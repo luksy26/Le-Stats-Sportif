@@ -567,18 +567,36 @@ def calculate_state_mean_by_category(question, state):
 
 @webserver.route('/api/graceful_shutdown', methods=['GET'])
 def graceful_shutdown_request():
+    """
+    Gracefully shuts down the ThreadPool task runner.
+
+    Returns:
+        JSONResponse: 202 Accepted response with shutdown message.
+    """
     webserver.tasks_runner.shutdown()
     return jsonify({'message': 'Graceful shutdown initiated'}), 202
 
 
 @webserver.route('/api/num_jobs', methods=['GET'])
 def num_jobs_request():
-    num_jobs = webserver.tasks_runner.no_tasks_in_queue()
+    """
+    Gets the number of tasks yet to be processed.
+    """
+    results_dir = webserver.tasks_runner.results_dir
+    num_processed = len(os.listdir(results_dir))
+    num_encountered = len(webserver.tasks_runner.encountered_tasks)
+    num_jobs = num_encountered - num_processed
     return jsonify({'Number of tasks': num_jobs}), 200
 
 
 @webserver.route('/api/jobs', methods=['GET'])
 def jobs_request():
+    """
+    Gets completed & running jobs info, sorts by ID.
+
+    Returns:
+        JSONResponse: Status ("done"), data (job_id: "done" or "running"), sorted by ID.
+    """
     return_data = {"status": "done", "data": []}
     results_dir = webserver.tasks_runner.results_dir
     # Iterate through files in the results directory

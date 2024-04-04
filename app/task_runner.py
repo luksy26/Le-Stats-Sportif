@@ -73,12 +73,6 @@ class ThreadPool:
         """
         return self.shutdown_event.is_set()
 
-    def no_tasks_in_queue(self):
-        """
-        Returns the number of tasks remaining in the queue
-        """
-        return self.task_queue.qsize()
-
 
 class TaskRunner(Thread):
     """
