@@ -17,8 +17,6 @@ from flask import request, jsonify
 from app import webserver
 
 
-# from __init__ import webserver
-
 # Example endpoint definition
 @webserver.route('/api/post_endpoint', methods=['POST'])
 def post_endpoint():
@@ -107,7 +105,8 @@ def states_mean_request():
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_states_mean, question)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_states_mean, question, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -115,20 +114,21 @@ def states_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_states_mean(question):
+def calculate_states_mean(question, questions_dict):
     """
     Calculates mean data values for each state across all stratifications
     for a given question.
 
     Args:
         question (str): The text of the question to calculate state means for.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: A dictionary with state names as keys and their calculated mean values.
             States are sorted by mean value in ascending order.
     """
     result = {}
-    states_dict = webserver.data_ingestor.questions_dict[question]
+    states_dict = questions_dict[question]
     for state, stratification_categories_dict in states_dict.items():
         sum_values = 0
         no_values = 0
@@ -163,7 +163,8 @@ def state_mean_request():
     question = data["question"]
     state = data["state"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_state_mean, question, state)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_state_mean, question, state, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -171,13 +172,14 @@ def state_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_state_mean(question, state):
+def calculate_state_mean(question, state, questions_dict):
     """
     Calculates the mean data value for a specific question and state across all stratifications.
 
     Args:
         question (str): The text of the question to calculate the mean for.
         state (str): The name of the state to calculate the mean for.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: A dictionary with the state name as the key and its calculated mean value.
@@ -185,7 +187,7 @@ def calculate_state_mean(question, state):
             question and state.
     """
     result = {}
-    states_dict = webserver.data_ingestor.questions_dict[question]
+    states_dict = questions_dict[question]
     stratification_categories_dict = states_dict[state]
     sum_values = 0
     no_values = 0
@@ -220,7 +222,10 @@ def best5_request():
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_best5, question)
+    questions_dict = webserver.data_ingestor.questions_dict
+    questions_best_is_max = webserver.data_ingestor.questions_best_is_max
+    new_task = (webserver.job_counter, calculate_best5, question,
+                questions_dict, questions_best_is_max)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -228,18 +233,20 @@ def best5_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_best5(question):
+def calculate_best5(question, questions_dict, questions_best_is_max):
     """
     Identifies top/bottom 5 states based on mean values (question-dependent).
 
     Args:
         question (str): The question to analyze.
+        questions_dict: the dictionary that contains all the necessary data
+        questions_best_is_max: list of questions for which a larger value is better
 
     Returns:
         dict: Top/bottom 5 states with mean values (sorted).
     """
-    temp_result = calculate_states_mean(question)
-    if question in webserver.data_ingestor.questions_best_is_max:
+    temp_result = calculate_states_mean(question, questions_dict)
+    if question in questions_best_is_max:
         result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
     else:
@@ -265,7 +272,10 @@ def worst5_request():
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_worst5, question)
+    questions_dict = webserver.data_ingestor.questions_dict
+    questions_best_is_min = webserver.data_ingestor.questions_best_is_min
+    new_task = (webserver.job_counter, calculate_worst5, question,
+                questions_dict, questions_best_is_min)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -273,7 +283,7 @@ def worst5_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_worst5(question):
+def calculate_worst5(question, questions_dict, questions_best_is_min):
     """
     Similar to 'calculate_best5' but identifies bottom 5 states instead of top 5.
 
@@ -281,12 +291,14 @@ def calculate_worst5(question):
 
     Args:
         question (str): The question to analyze.
+        questions_dict: the dictionary that contains all the necessary data
+        questions_best_is_min: list of questions for which a smaller value is better
 
     Returns:
         dict: Bottom 5 states with mean values (sorted).
     """
-    temp_result = calculate_states_mean(question)
-    if question in webserver.data_ingestor.questions_best_is_min:
+    temp_result = calculate_states_mean(question, questions_dict)
+    if question in questions_best_is_min:
         result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
     else:
@@ -315,7 +327,8 @@ def global_mean_request():
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_global_mean, question)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_global_mean, question, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -323,12 +336,13 @@ def global_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_global_mean(question):
+def calculate_global_mean(question, questions_dict):
     """
     Calculates the overall mean value for a given question across all states and stratifications.
 
     Args:
         question (str): The text of the question to calculate the global mean for.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: A dictionary containing the global mean value under the key "global_mean".
@@ -337,7 +351,7 @@ def calculate_global_mean(question):
     result = {}
     sum_values = 0
     no_values = 0
-    states_dict = webserver.data_ingestor.questions_dict[question]
+    states_dict = questions_dict[question]
     for _, stratification_categories_dict in states_dict.items():
         for _, stratifications_dict in stratification_categories_dict.items():
             for _, data_values_dict in stratifications_dict.items():
@@ -371,7 +385,8 @@ def diff_from_mean_request():
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_diff_from_mean, question)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_diff_from_mean, question, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -379,18 +394,19 @@ def diff_from_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_diff_from_mean(question):
+def calculate_diff_from_mean(question, questions_dict):
     """
     Calculates state differences from global mean for a question.
 
     Args:
         question (str): The question to analyze.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: State names with differences from global mean.
     """
-    global_mean = calculate_global_mean(question)
-    states_mean = calculate_states_mean(question)
+    global_mean = calculate_global_mean(question, questions_dict)
+    states_mean = calculate_states_mean(question, questions_dict)
 
     return {key: global_mean["global_mean"] - value for key, value in states_mean.items()}
 
@@ -416,7 +432,9 @@ def state_diff_from_mean_request():
     question = data["question"]
     state = data["state"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_state_diff_from_mean, question, state)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_state_diff_from_mean,
+                question, state, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -424,19 +442,20 @@ def state_diff_from_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_state_diff_from_mean(question, state):
+def calculate_state_diff_from_mean(question, state, questions_dict):
     """
     Calculates difference between global mean and state mean for a question and state.
 
     Args:
         question (str): The question to analyze.
         state (str): The state to compare.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: State and its difference from global mean.
     """
-    global_mean = calculate_global_mean(question)
-    state_mean = calculate_state_mean(question, state)
+    global_mean = calculate_global_mean(question, questions_dict)
+    state_mean = calculate_state_mean(question, state, questions_dict)
 
     state_diff_from_mean = {state: global_mean["global_mean"] - state_mean[state]}
     return state_diff_from_mean
@@ -462,7 +481,8 @@ def mean_by_category_request():
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_mean_by_category, question)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_mean_by_category, question, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -470,7 +490,7 @@ def mean_by_category_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_mean_by_category(question):
+def calculate_mean_by_category(question, questions_dict):
     """
     Calculates mean values for each category (state, stratification category, stratification)
     within a question.
@@ -481,13 +501,14 @@ def calculate_mean_by_category(question):
 
     Args:
         question (str): The text of the question to analyze.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: A dictionary with keys representing category combinations
         (state, stratification category, stratification) and their corresponding mean values.
     """
     result = {}
-    states_dict = webserver.data_ingestor.questions_dict[question]
+    states_dict = questions_dict[question]
     for state, stratification_categories_dict in states_dict.items():
         for stratification_category, stratifications_dict in stratification_categories_dict.items():
             for stratification, data_values_dict in stratifications_dict.items():
@@ -525,7 +546,9 @@ def state_mean_by_category_request():
     question = data["question"]
     state = data["state"]
     # Register job. Don't wait for task to finish
-    new_task = (webserver.job_counter, calculate_state_mean_by_category, question, state)
+    questions_dict = webserver.data_ingestor.questions_dict
+    new_task = (webserver.job_counter, calculate_state_mean_by_category,
+                question, state, questions_dict)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -533,7 +556,7 @@ def state_mean_by_category_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_state_mean_by_category(question, state):
+def calculate_state_mean_by_category(question, state, questions_dict):
     """
     Calculates mean values for categories within a specific state of a question.
 
@@ -544,13 +567,14 @@ def calculate_state_mean_by_category(question, state):
     Args:
         question (str): The text of the question to analyze.
         state (str): The name of the state to calculate means for.
+        questions_dict: the dictionary that contains all the necessary data
 
     Returns:
         dict: A dictionary with the state name as the key and a nested dictionary containing
         mean values for category combinations (stratification category, stratification).
     """
     result = {state: {}}
-    states_dict = webserver.data_ingestor.questions_dict[question]
+    states_dict = questions_dict[question]
     stratification_categories_dict = states_dict[state]
     for stratification_category, stratifications_dict in stratification_categories_dict.items():
         for stratification, data_values_dict in stratifications_dict.items():
