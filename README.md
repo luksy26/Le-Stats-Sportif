@@ -64,3 +64,22 @@ Git
 -
 1. https://github.com/luksy26/Le-Stats-Sportif - momentan este privat.
 2. folderul .git se afla in arhiva si se pot gasi commit-urile.
+
+Structura Arhivei
+-
+
+- root
+  - app
+    - \_\_init\_\_.py
+    - data_ingestor.py
+    - routes.py
+    - task_runner.py
+  - unittests
+    - README_testing.md
+    - small_dict.json
+    - TestWebserver.py
+  - \_\_init\_\_.py
+  - README
+  - git
+
+    
