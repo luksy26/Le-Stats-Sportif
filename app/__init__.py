@@ -8,11 +8,10 @@ Flask app for data analysis tasks.
 * Creates the 'results' directory that is used by taskRunners to store
 the result data for a certain job_id
 """
-
 import os
 import logging
-from datetime import timezone
 from logging.handlers import RotatingFileHandler
+import time
 from flask import Flask
 from app.data_ingestor import DataIngestor
 from app.task_runner import ThreadPool
@@ -42,33 +41,28 @@ print("Empty 'results' directory created successfully")
 webserver.tasks_runner.update_results_dir(results_dir)
 
 
-class UTCFormatter(logging.Formatter):
-    """
-    Formatter class that ensures UTC timestamps in log messages.
-    """
-    def formatTime(self, record, datefmt=None):
-        timestamp = self.converter(record.created)
-        utc_timestamp = timestamp.astimezone(timezone.utc)
-        record.created = utc_timestamp
-        return super().formatTime(record, datefmt)
+class GMTFormatter(logging.Formatter):
+    converter = time.gmtime
 
 
-def get_logger():
-    """
-    Creates and returns a logger with UTC timestamps and a rotating file handler.
-    """
-
-    logger = logging.getLogger(__name__)
+def get_webserver_logger():
+    # Create logger
+    logger = logging.getLogger('webserver_logger')
     logger.setLevel(logging.INFO)
 
-    handler = RotatingFileHandler("webserver.log", maxBytes=10485760, backupCount=5)
-    formatter = UTCFormatter("%(asctime)s - %(levelname)s - %(message)s",
-                             datefmt="%Y-%m-%d %H:%M:%S %Z")
+    # Create a rotating file handler
+    handler = RotatingFileHandler('webserver.log', maxBytes=1024 * 1024, backupCount=5)
+
+    # Set formatter with GMT timestamp
+    formatter = GMTFormatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
+
+    # Add the handler to the logger
     logger.addHandler(handler)
+
     return logger
 
 
-webserver.my_logger = get_logger()
+webserver.my_logger = get_webserver_logger()
 
 from app import routes
