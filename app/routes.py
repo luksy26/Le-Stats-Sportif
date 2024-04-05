@@ -568,14 +568,16 @@ def calculate_state_diff_from_mean(question, state, questions_dict, my_logger):
     Returns:
         dict: State and its difference from global mean.
     """
-    my_logger.info(f"Calculating answer for state_diff_from_mean and question: {question}, state: {state}")
+    my_logger.info(f"Calculating answer for state_diff_from_mean "
+                   f"and question: {question}, state: {state}")
 
     global_mean = calculate_global_mean(question, questions_dict, my_logger)
     state_mean = calculate_state_mean(question, state, questions_dict, my_logger)
 
     result = {state: global_mean["global_mean"] - state_mean[state]}
 
-    my_logger.info(f"Got answer for state_diff_from_mean and question: {question}, state: {state}. Result is {result}")
+    my_logger.info(f"Got answer for state_diff_from_mean "
+                   f"and question: {question}, state: {state}. Result is {result}")
 
     return result
 
@@ -720,7 +722,8 @@ def calculate_state_mean_by_category(question, state, questions_dict, my_logger)
         dict: A dictionary with the state name as the key and a nested dictionary containing
         mean values for category combinations (stratification category, stratification).
     """
-    my_logger.info(f"Calculating answer for state_mean_by_category and question: {question}, state: {state}")
+    my_logger.info(f"Calculating answer for state_mean_by_category "
+                   f"and question: {question}, state: {state}")
 
     result = {state: {}}
     states_dict = questions_dict[question]
@@ -736,7 +739,8 @@ def calculate_state_mean_by_category(question, state, questions_dict, my_logger)
                 new_key = "(\'" + stratification_category + "\', \'" + stratification + "\')"
                 result[state][new_key] = sum_values / no_values
 
-    my_logger.info(f"Got answer for state_mean_by_category and question: {question}, state: {state}.")
+    my_logger.info(f"Got answer for state_mean_by_category "
+                   f"and question: {question}, state: {state}.")
 
     return result
 

@@ -7,6 +7,7 @@ Flask app for data analysis tasks.
 * Tracks jobs with `webserver.job_counter`.
 * Creates the 'results' directory that is used by taskRunners to store
 the result data for a certain job_id
+* Creates and assigns a logger to the webserver
 """
 import os
 import logging
@@ -43,10 +44,17 @@ webserver.tasks_runner.update_results_dir(results_dir)
 
 
 class GMTFormatter(logging.Formatter):
+    """
+    Formatter class that uses gmtime
+    """
     converter = time.gmtime
 
 
 def get_webserver_logger():
+    """
+    Configures a logger to be used for the webserver.
+    Uses a RotatingFileHandler and a queue listener for multithreading
+    """
     # Create logger
     logger = logging.getLogger('webserver_logger')
     logger.setLevel(logging.INFO)
