@@ -54,20 +54,28 @@ def get_response(job_id):
     Returns:
         JSON: Response containing job status and data (if done) or error message.
     """
-    print(f"JobID is {job_id}")
+    webserver.my_logger.info(f"Requesting data for job_{job_id}")
+
     # Check if job_id is valid
     if int(job_id) <= webserver.job_counter:
         # Check if job_id is done and return the result
-        task_data = task_data_for(int(job_id))
+        task_data = task_data_for(int(job_id), webserver.my_logger)
         if task_data is None:
+            webserver.my_logger.info(f"Job {job_id} is running, data cannot be provided yet")
+
             return jsonify({'status': "running"})
+
+        webserver.my_logger.info(f"Job {job_id} has data {task_data}")
+
         return jsonify({'status': "done", 'data': task_data})
 
     # If not, return running status
+    webserver.my_logger.info(f"Job {job_id} is invalid")
+
     return jsonify({'status': "error", 'reason': "Invalid job_id"})
 
 
-def task_data_for(job_id):
+def task_data_for(job_id, my_logger):
     """
     Fetches task data (a dictionary) from job_id.pkl,
     or None if not found.
@@ -82,6 +90,7 @@ def task_data_for(job_id):
         return None
     with open(filename, 'rb') as job_file:
         # Load the PKL data from the file
+        my_logger.info(f"Found the result file for job {job_id}")
         return pickle.load(job_file)
 
 
@@ -99,14 +108,24 @@ def states_mean_request():
         JSON: Response containing the submitted job's ID.
     """
     # check if the threadpool is accepting requests
+    webserver.my_logger.info("Requesting states_mean")
+
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "states_mean request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
-    new_task = (webserver.job_counter, calculate_states_mean, question, questions_dict)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after states_mean request")
+
+    new_task = (webserver.job_counter, calculate_states_mean, question,
+                questions_dict, webserver.logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -114,7 +133,7 @@ def states_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_states_mean(question, questions_dict):
+def calculate_states_mean(question, questions_dict, my_logger):
     """
     Calculates mean data values for each state across all stratifications
     for a given question.
@@ -122,11 +141,14 @@ def calculate_states_mean(question, questions_dict):
     Args:
         question (str): The text of the question to calculate state means for.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
 
     Returns:
         dict: A dictionary with state names as keys and their calculated mean values.
             States are sorted by mean value in ascending order.
     """
+    my_logger.info(f"Calculating answer for states_mean and question: {question}")
+
     result = {}
     states_dict = questions_dict[question]
     for state, stratification_categories_dict in states_dict.items():
@@ -139,7 +161,11 @@ def calculate_states_mean(question, questions_dict):
                     no_values += 1
         if no_values > 0:
             result[state] = sum_values / no_values
-    return dict(sorted(result.items(), key=lambda item: item[1]))
+    result = dict(sorted(result.items(), key=lambda item: item[1]))
+
+    my_logger.info(f"Got answer for states_mean and question: {question}. Result is {result}")
+
+    return result
 
 
 @webserver.route('/api/state_mean', methods=['POST'])
@@ -155,8 +181,13 @@ def state_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting state_mean")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "state_mean request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
@@ -164,7 +195,12 @@ def state_mean_request():
     state = data["state"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
-    new_task = (webserver.job_counter, calculate_state_mean, question, state, questions_dict)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after state_mean request")
+
+    new_task = (webserver.job_counter, calculate_state_mean,
+                question, state, questions_dict, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -172,7 +208,7 @@ def state_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_state_mean(question, state, questions_dict):
+def calculate_state_mean(question, state, questions_dict, my_logger):
     """
     Calculates the mean data value for a specific question and state across all stratifications.
 
@@ -180,12 +216,15 @@ def calculate_state_mean(question, state, questions_dict):
         question (str): The text of the question to calculate the mean for.
         state (str): The name of the state to calculate the mean for.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
 
     Returns:
         dict: A dictionary with the state name as the key and its calculated mean value.
             Returns an empty dictionary if no data is available for the specified
             question and state.
     """
+    my_logger.info(f"Calculating answer for state_mean and question: {question}, state: {state}")
+
     result = {}
     states_dict = questions_dict[question]
     stratification_categories_dict = states_dict[state]
@@ -198,6 +237,9 @@ def calculate_state_mean(question, state, questions_dict):
                 no_values += 1
     if no_values > 0:
         result[state] = sum_values / no_values
+
+    my_logger.info(f"Got answer for state_mean and question: {question}.")
+
     return result
 
 
@@ -215,8 +257,13 @@ def best5_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting best5")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "best5 request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
@@ -224,8 +271,12 @@ def best5_request():
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
     questions_best_is_max = webserver.data_ingestor.questions_best_is_max
-    new_task = (webserver.job_counter, calculate_best5, question,
-                questions_dict, questions_best_is_max)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after best5 request")
+
+    new_task = (webserver.job_counter, calculate_best5, question, questions_dict,
+                questions_best_is_max, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -233,7 +284,7 @@ def best5_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_best5(question, questions_dict, questions_best_is_max):
+def calculate_best5(question, questions_dict, questions_best_is_max, my_logger):
     """
     Identifies top/bottom 5 states based on mean values (question-dependent).
 
@@ -241,17 +292,23 @@ def calculate_best5(question, questions_dict, questions_best_is_max):
         question (str): The question to analyze.
         questions_dict: the dictionary that contains all the necessary data
         questions_best_is_max: list of questions for which a larger value is better
+        my_logger: useful for debug
 
     Returns:
         dict: Top/bottom 5 states with mean values (sorted).
     """
-    temp_result = calculate_states_mean(question, questions_dict)
+    my_logger.info(f"Calculating answer for best5 and question: {question}")
+
+    temp_result = calculate_states_mean(question, questions_dict, my_logger)
     if question in questions_best_is_max:
         result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
     else:
         result = heapq.nsmallest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1]))
+
+    my_logger.info(f"Got answer for best5 and question: {question}. Result is {sorted_result}")
+
     return sorted_result
 
 
@@ -265,8 +322,13 @@ def worst5_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting worst5")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "worst5 request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
@@ -274,8 +336,12 @@ def worst5_request():
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
     questions_best_is_min = webserver.data_ingestor.questions_best_is_min
-    new_task = (webserver.job_counter, calculate_worst5, question,
-                questions_dict, questions_best_is_min)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after worst5 request")
+
+    new_task = (webserver.job_counter, calculate_worst5, question, questions_dict,
+                questions_best_is_min, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -283,7 +349,7 @@ def worst5_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_worst5(question, questions_dict, questions_best_is_min):
+def calculate_worst5(question, questions_dict, questions_best_is_min, my_logger):
     """
     Similar to 'calculate_best5' but identifies bottom 5 states instead of top 5.
 
@@ -293,17 +359,23 @@ def calculate_worst5(question, questions_dict, questions_best_is_min):
         question (str): The question to analyze.
         questions_dict: the dictionary that contains all the necessary data
         questions_best_is_min: list of questions for which a smaller value is better
+        my_logger: useful for debug
 
     Returns:
         dict: Bottom 5 states with mean values (sorted).
     """
-    temp_result = calculate_states_mean(question, questions_dict)
+    my_logger.info(f"Calculating answer for worst5 and question: {question}")
+
+    temp_result = calculate_states_mean(question, questions_dict, my_logger)
     if question in questions_best_is_min:
         result = heapq.nlargest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1], reverse=True))
     else:
         result = heapq.nsmallest(5, temp_result.items(), key=lambda item: item[1])
         sorted_result = dict(sorted(result, key=lambda item: item[1]))
+
+    my_logger.info(f"Got answer for worst5 and question: {question}. Result is {sorted_result}")
+
     return sorted_result
 
 
@@ -320,15 +392,25 @@ def global_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting global_mean")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "global_mean request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
-    new_task = (webserver.job_counter, calculate_global_mean, question, questions_dict)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after global_mean request")
+
+    new_task = (webserver.job_counter, calculate_global_mean,
+                question, questions_dict, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -336,18 +418,21 @@ def global_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_global_mean(question, questions_dict):
+def calculate_global_mean(question, questions_dict, my_logger):
     """
     Calculates the overall mean value for a given question across all states and stratifications.
 
     Args:
         question (str): The text of the question to calculate the global mean for.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
 
     Returns:
         dict: A dictionary containing the global mean value under the key "global_mean".
             Returns an empty dictionary if no data is available for the specified question.
     """
+    my_logger.info(f"Calculating answer for global_mean and question: {question}")
+
     result = {}
     sum_values = 0
     no_values = 0
@@ -361,6 +446,9 @@ def calculate_global_mean(question, questions_dict):
     result["global_mean"] = 0
     if no_values > 0:
         result["global_mean"] = sum_values / no_values
+
+    my_logger.info(f"Got answer for global_mean and question: {question}. Result is {result}")
+
     return result
 
 
@@ -378,15 +466,25 @@ def diff_from_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting diff_from_mean")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "diff_from_mean request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
-    new_task = (webserver.job_counter, calculate_diff_from_mean, question, questions_dict)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after diff_from_mean request")
+
+    new_task = (webserver.job_counter, calculate_diff_from_mean,
+                question, questions_dict, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -394,21 +492,27 @@ def diff_from_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_diff_from_mean(question, questions_dict):
+def calculate_diff_from_mean(question, questions_dict, my_logger):
     """
     Calculates state differences from global mean for a question.
 
     Args:
         question (str): The question to analyze.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
 
     Returns:
         dict: State names with differences from global mean.
     """
-    global_mean = calculate_global_mean(question, questions_dict)
-    states_mean = calculate_states_mean(question, questions_dict)
+    my_logger.info(f"Calculating answer for diff_from_mean and question: {question}")
 
-    return {key: global_mean["global_mean"] - value for key, value in states_mean.items()}
+    global_mean = calculate_global_mean(question, questions_dict, my_logger)
+    states_mean = calculate_states_mean(question, questions_dict, my_logger)
+    result = {key: global_mean["global_mean"] - value for key, value in states_mean.items()}
+
+    my_logger.info(f"Got answer for diff_from_mean and question: {question}. Result is {result}")
+
+    return result
 
 
 @webserver.route('/api/state_diff_from_mean', methods=['POST'])
@@ -424,8 +528,13 @@ def state_diff_from_mean_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting state_diff_from_mean")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "state_diff_from_mean request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
@@ -433,8 +542,12 @@ def state_diff_from_mean_request():
     state = data["state"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after state_diff_from_mean request")
+
     new_task = (webserver.job_counter, calculate_state_diff_from_mean,
-                question, state, questions_dict)
+                question, state, questions_dict, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -442,7 +555,7 @@ def state_diff_from_mean_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_state_diff_from_mean(question, state, questions_dict):
+def calculate_state_diff_from_mean(question, state, questions_dict, my_logger):
     """
     Calculates difference between global mean and state mean for a question and state.
 
@@ -450,15 +563,21 @@ def calculate_state_diff_from_mean(question, state, questions_dict):
         question (str): The question to analyze.
         state (str): The state to compare.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
 
     Returns:
         dict: State and its difference from global mean.
     """
-    global_mean = calculate_global_mean(question, questions_dict)
-    state_mean = calculate_state_mean(question, state, questions_dict)
+    my_logger.info(f"Calculating answer for state_diff_from_mean and question: {question}, state: {state}")
 
-    state_diff_from_mean = {state: global_mean["global_mean"] - state_mean[state]}
-    return state_diff_from_mean
+    global_mean = calculate_global_mean(question, questions_dict, my_logger)
+    state_mean = calculate_state_mean(question, state, questions_dict, my_logger)
+
+    result = {state: global_mean["global_mean"] - state_mean[state]}
+
+    my_logger.info(f"Got answer for state_diff_from_mean and question: {question}, state: {state}. Result is {result}")
+
+    return result
 
 
 @webserver.route('/api/mean_by_category', methods=['POST'])
@@ -474,15 +593,25 @@ def mean_by_category_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting mean_by_category")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "mean_by_category request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
     question = data["question"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
-    new_task = (webserver.job_counter, calculate_mean_by_category, question, questions_dict)
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after mean_by_category request")
+
+    new_task = (webserver.job_counter, calculate_mean_by_category,
+                question, questions_dict, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -490,7 +619,7 @@ def mean_by_category_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_mean_by_category(question, questions_dict):
+def calculate_mean_by_category(question, questions_dict, my_logger):
     """
     Calculates mean values for each category (state, stratification category, stratification)
     within a question.
@@ -502,11 +631,15 @@ def calculate_mean_by_category(question, questions_dict):
     Args:
         question (str): The text of the question to analyze.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
+
 
     Returns:
         dict: A dictionary with keys representing category combinations
         (state, stratification category, stratification) and their corresponding mean values.
     """
+    my_logger.info(f"Calculating answer for mean_by_category and question: {question}")
+
     result = {}
     states_dict = questions_dict[question]
     for state, stratification_categories_dict in states_dict.items():
@@ -521,6 +654,9 @@ def calculate_mean_by_category(question, questions_dict):
                     new_key = ("(\'" + state + "\', \'" + stratification_category +
                                "\', \'" + stratification + "\')")
                     result[new_key] = sum_values / no_values
+
+    my_logger.info(f"Got answer for mean_by_category and question: {question}. Result is {result}")
+
     return result
 
 
@@ -538,8 +674,13 @@ def state_mean_by_category_request():
     Returns:
         JSON: Response containing the submitted job's ID.
     """
+    webserver.my_logger.info("Requesting state_mean_by_category")
+
     # check if the threadpool is accepting requests
     if webserver.tasks_runner.is_shutting_down():
+        webserver.my_logger.info("Threadpool is shutting down, "
+                                 "state_mean_by_category request not accepted")
+
         return jsonify({"job_id": -1, "reason": "shutting down"})
     # Get request data
     data = request.json
@@ -547,8 +688,12 @@ def state_mean_by_category_request():
     state = data["state"]
     # Register job. Don't wait for task to finish
     questions_dict = webserver.data_ingestor.questions_dict
+
+    webserver.my_logger.info(f"Submitting new job with id {webserver.job_counter} "
+                             f"after state_mean_by_category request")
+
     new_task = (webserver.job_counter, calculate_state_mean_by_category,
-                question, state, questions_dict)
+                question, state, questions_dict, webserver.my_logger)
     webserver.tasks_runner.submit(new_task)
     # Increment job_id counter
     webserver.job_counter += 1
@@ -556,7 +701,7 @@ def state_mean_by_category_request():
     return jsonify({"job_id": new_task[0]})
 
 
-def calculate_state_mean_by_category(question, state, questions_dict):
+def calculate_state_mean_by_category(question, state, questions_dict, my_logger):
     """
     Calculates mean values for categories within a specific state of a question.
 
@@ -568,11 +713,15 @@ def calculate_state_mean_by_category(question, state, questions_dict):
         question (str): The text of the question to analyze.
         state (str): The name of the state to calculate means for.
         questions_dict: the dictionary that contains all the necessary data
+        my_logger: useful for debug
+
 
     Returns:
         dict: A dictionary with the state name as the key and a nested dictionary containing
         mean values for category combinations (stratification category, stratification).
     """
+    my_logger.info(f"Calculating answer for state_mean_by_category and question: {question}, state: {state}")
+
     result = {state: {}}
     states_dict = questions_dict[question]
     stratification_categories_dict = states_dict[state]
@@ -586,6 +735,9 @@ def calculate_state_mean_by_category(question, state, questions_dict):
             if no_values > 0 and stratification_category != "" and stratification != "":
                 new_key = "(\'" + stratification_category + "\', \'" + stratification + "\')"
                 result[state][new_key] = sum_values / no_values
+
+    my_logger.info(f"Got answer for state_mean_by_category and question: {question}, state: {state}.")
+
     return result
 
 
@@ -597,6 +749,7 @@ def graceful_shutdown_request():
     Returns:
         JSONResponse: 202 Accepted response with shutdown message.
     """
+    webserver.my_logger.info("Requesting threadpool shutdown")
     webserver.tasks_runner.shutdown()
     return jsonify({'message': 'Graceful shutdown initiated'}), 202
 
@@ -606,10 +759,12 @@ def num_jobs_request():
     """
     Gets the number of tasks yet to be processed.
     """
+    webserver.my_logger.info("Requesting number of running jobs")
     results_dir = webserver.tasks_runner.results_dir
     num_processed = len(os.listdir(results_dir))
     num_encountered = len(webserver.tasks_runner.encountered_tasks)
     num_jobs = num_encountered - num_processed
+    webserver.my_logger.info(f"There are {num_jobs} jobs running")
     return jsonify({'Number of tasks': num_jobs}), 200
 
 
@@ -621,16 +776,18 @@ def jobs_request():
     Returns:
         JSONResponse: Status ("done"), data (job_id: "done" or "running"), sorted by ID.
     """
+    webserver.my_logger.info("Requesting data about jobs")
     return_data = {"status": "done", "data": []}
     results_dir = webserver.tasks_runner.results_dir
     # Iterate through files in the results directory
+    webserver.my_logger.info("Searching for finished jobs")
     for filename in os.listdir(results_dir):
         # Extract job ID from filename
         job_id = int(filename.split(".")[0])
         return_data["data"].append({"job_id_" + str(job_id): "done"})
 
     potential_running_jobs = webserver.tasks_runner.encountered_tasks
-
+    webserver.my_logger.info("Searching for running jobs")
     for job_id in potential_running_jobs:
         key_to_search = "job_id_" + str(job_id)
         if {key_to_search: "done"} not in return_data["data"]:

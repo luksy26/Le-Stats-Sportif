@@ -12,6 +12,7 @@ from app.routes import calculate_states_mean, \
     calculate_state_diff_from_mean, \
     calculate_mean_by_category, \
     calculate_state_mean_by_category
+from app.routes import webserver
 
 
 class TestWebserver(unittest.TestCase):
@@ -52,12 +53,13 @@ class TestWebserver(unittest.TestCase):
             self.questions_dict = json.load(file)
         self.question_1 = self.questions_best_is_min[0]
         self.question_2 = self.questions_best_is_max[0]
+        self.my_logger = webserver.my_logger
 
     def test_calculate_states_mean(self):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_states_mean(self.question_1, self.questions_dict)
+        result = calculate_states_mean(self.question_1, self.questions_dict, self.my_logger)
         self.assertEqual(result, {'Wisconsin': 29.518181818181816,
                                   'Utah': 32.725,
                                   'Vermont': 32.87777777777777,
@@ -69,14 +71,14 @@ class TestWebserver(unittest.TestCase):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_state_mean(self.question_1, "Utah", self.questions_dict)
+        result = calculate_state_mean(self.question_1, "Utah", self.questions_dict, self.my_logger)
         self.assertEqual(result, {'Utah': 32.725})
 
     def test_calculate_best5(self):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_best5(self.question_1, self.questions_dict, self.questions_best_is_max)
+        result = calculate_best5(self.question_1, self.questions_dict, self.questions_best_is_max, self.my_logger)
         self.assertEqual(result, {'Wisconsin': 29.518181818181816,
                                   'Utah': 32.725,
                                   'Vermont': 32.87777777777777,
@@ -87,7 +89,7 @@ class TestWebserver(unittest.TestCase):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_worst5(self.question_2, self.questions_dict, self.questions_best_is_min)
+        result = calculate_worst5(self.question_2, self.questions_dict, self.questions_best_is_min, self.my_logger)
         self.assertEqual(result, {'Puerto Rico': 27.366666666666664,
                                   'Arkansas': 43.8375,
                                   'Kansas': 47.400000000000006,
@@ -98,14 +100,14 @@ class TestWebserver(unittest.TestCase):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_global_mean(self.question_2, self.questions_dict)
+        result = calculate_global_mean(self.question_2, self.questions_dict, self.my_logger)
         self.assertEqual(result, {'global_mean': 46.369565217391305})
 
     def test_calculate_diff_from_mean(self):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_diff_from_mean(self.question_2, self.questions_dict)
+        result = calculate_diff_from_mean(self.question_2, self.questions_dict, self.my_logger)
         self.assertEqual(result, {'Puerto Rico': 19.00289855072464,
                                   'Arkansas': 2.532065217391306,
                                   'Kansas': -1.030434782608701,
@@ -117,14 +119,14 @@ class TestWebserver(unittest.TestCase):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_state_diff_from_mean(self.question_2, "Missouri", self.questions_dict)
+        result = calculate_state_diff_from_mean(self.question_2, "Missouri", self.questions_dict, self.my_logger)
         self.assertEqual(result, {'Missouri': -1.1704347826086945})
 
     def test_calculate_mean_by_category(self):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_mean_by_category(self.question_2, self.questions_dict)
+        result = calculate_mean_by_category(self.question_2, self.questions_dict, self.my_logger)
         self.assertEqual(result,
                          {"('Idaho', 'Race/Ethnicity', 'Asian')": 49.8,
                           "('Idaho', 'Race/Ethnicity', 'American Indian/Alaska Native')": 70.9,
@@ -164,7 +166,7 @@ class TestWebserver(unittest.TestCase):
         """
         Calculates the result and compares it to reference
         """
-        result = calculate_state_mean_by_category(self.question_2, "Missouri", self.questions_dict)
+        result = calculate_state_mean_by_category(self.question_2, "Missouri", self.questions_dict, self.my_logger)
         self.assertEqual(result, {"Missouri": {"('Race/Ethnicity', 'Asian')": 45.5,
                                                "('Race/Ethnicity', 'Other')": 49.8,
                                                "('Gender', 'Female')": 42.5,

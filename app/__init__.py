@@ -10,6 +10,7 @@ the result data for a certain job_id
 """
 import os
 import logging
+import queue
 from logging.handlers import RotatingFileHandler
 import time
 from flask import Flask
@@ -50,6 +51,9 @@ def get_webserver_logger():
     logger = logging.getLogger('webserver_logger')
     logger.setLevel(logging.INFO)
 
+    # Create a Queue to store log records
+    log_queue = queue.Queue()
+
     # Create a rotating file handler
     handler = RotatingFileHandler('webserver.log', maxBytes=1024 * 1024, backupCount=5)
 
@@ -59,6 +63,10 @@ def get_webserver_logger():
 
     # Add the handler to the logger
     logger.addHandler(handler)
+
+    # Create and start a QueueListener
+    listener = logging.handlers.QueueListener(log_queue, handler)
+    listener.start()
 
     return logger
 
