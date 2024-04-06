@@ -27,7 +27,6 @@ scopul principal al temei.
 
 * Am creat un queue listener pentru logger pentru cazurile in care thread-urile vor sa scrie in acelasi timp in fisier.
 Nu am observat astfel de probleme dar am decis sa o fac ca un safety net.
-* Tema rula in ~2s fara logger, acum dureaza ~20s
 
 
 Implementare

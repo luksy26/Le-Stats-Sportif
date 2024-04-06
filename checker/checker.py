@@ -6,26 +6,34 @@ from datetime import datetime, timedelta
 from time import sleep
 import os
 
+import sys
+try:
+    from io import StringIO
+except:
+    from StringIO import StringIO
+
+import pylint.lint
+
 from deepdiff import DeepDiff
 
 total_score = 0
 
 ONLY_LAST = False
-
+LOCAL_DEBUG = True
 
 class TestAPI(unittest.TestCase):
     def setUp(self):
         os.system("rm -rf results/*")
 
-    def check_res_timeout(self, res_callable, ref_result, timeout_sec, poll_interval=0.2):
+    def check_res_timeout(self, res_callable, ref_result, timeout_sec, poll_interval = 0.2):
         initial_timestamp = datetime.now()
         while True:
             response = res_callable()
             # print(response)
-
+        
             # Asserting that the response status code is 200 (OK)
             self.assertEqual(response.status_code, 200)
-
+        
             # Asserting the response data
             response_data = response.json()
             # print(f"Response_data\n{response_data}")
@@ -33,11 +41,6 @@ class TestAPI(unittest.TestCase):
                 # print(f"Response data {response_data['data']} and type {type(response_data['data'])}")
                 # print(f"Ref data {ref_result} and type {type(ref_result)}")
                 d = DeepDiff(response_data['data'], ref_result, math_epsilon=0.01)
-                # if str(d) is not {}:
-                #     filtered_response = {key: value for key, value in response_data['data'].items() if key.startswith("(\'New Jersey")}
-                #     filtered_ref = {key: value for key, value in ref_result.items() if key.startswith("(\'New Jersey")}
-                #     print(f"Response data {filtered_response}")
-                #     print(f"Ref data {filtered_ref}")
                 self.assertTrue(d == {}, str(d))
                 break
             elif response_data['status'] == 'running':
@@ -80,6 +83,7 @@ class TestAPI(unittest.TestCase):
     def test_mean_by_category(self):
         self.helper_test_endpoint("mean_by_category")
 
+    @unittest.skipIf(ONLY_LAST, "Checking only the last added test")
     def test_state_mean_by_category(self):
         self.helper_test_endpoint("state_mean_by_category")
 
@@ -106,26 +110,56 @@ class TestAPI(unittest.TestCase):
 
             with open(f"{output_dir}/out-{idx}.json", "r") as fout:
                 ref_result = json.load(fout)
-
+            
             with self.subTest():
                 # Sending a POST request to the Flask endpoint
                 res = requests.post(f"http://127.0.0.1:5000/api/{endpoint}", json=req_data)
 
                 job_id = res.json()
-                print(f'job-res is {job_id}')
+                # print(f'job-res is {job_id}')
                 job_id = job_id["job_id"]
 
                 self.check_res_timeout(
-                    res_callable=lambda: requests.get(f"http://127.0.0.1:5000/api/get_results/{job_id}"),
-                    ref_result=ref_result,
-                    timeout_sec=1)
+                    res_callable = lambda: requests.get(f"http://127.0.0.1:5000/api/get_results/{job_id}"),
+                    ref_result = ref_result,
+                    timeout_sec = 1)
 
                 local_score += test_score
         total_score += min(round(local_score), test_suite_score)
 
+    def test_coding_style(self):
+        global total_score
+
+        python_files = []
+        for root, _, files in os.walk("./app"):
+            for file in files:
+                if file.endswith('.py'):
+                    python_files.append(os.path.join(root, file))
+
+        stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        ARGS = ["-r","n", "--rcfile=./checker/pylintrc"]
+        r = pylint.lint.Run(python_files + ARGS, exit=False)
+
+        test = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = stdout
+
+        lint_res = test.split('\n')
+        if LOCAL_DEBUG:
+            print(test)
+
+        rating_str = "Your code has been rated at "
+        score_line = list(filter(lambda ln: rating_str in ln, lint_res))[0]
+        score_str = score_line.split(rating_str)[-1]
+        score = float(score_str.split('/')[0])
+        print(score_line)
+        if score < 8:
+            total_score -= 5
 
 if __name__ == '__main__':
     try:
         unittest.main()
     finally:
-        print(f"Total score {total_score}")
+        print(f"Total: {total_score}/100")
