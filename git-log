@@ -1,0 +1,233 @@
+commit 5e843f40327ce9e1e18da13d74824eb696a91566
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Sat Apr 6 18:24:38 2024 +0300
+
+    Linting
+
+commit 31b6559660505c3c28aa3fc8f963a8a51faf194a
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Sat Apr 6 18:21:26 2024 +0300
+
+    Updated README once again
+
+commit 589456640fd1b839baf1bfc6987393388db92966
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Sat Apr 6 18:04:15 2024 +0300
+
+    Updated checker
+
+commit 6593407f84bd066defb72a982ece789a015c76f4
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Sat Apr 6 00:24:12 2024 +0300
+
+    LAST README
+
+commit 92a3c81dfb584f9412e0538a4e0f8732aeb9378f
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Sat Apr 6 00:16:26 2024 +0300
+
+    More README
+
+commit 28d5b26264ba156777b328cfe3824ea70e533416
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Sat Apr 6 00:03:28 2024 +0300
+
+    README
+
+commit 97e733578f62e1132788a7c6b1592f5dc4b066b4
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 22:55:57 2024 +0300
+
+    Linting
+
+commit 1ba65a3cfbba1fb2643a98f850432df4778571a8
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 22:43:07 2024 +0300
+
+    Synchronizing logger, added logging messages
+    
+    Also, logger can be injected in 'calculate' functions
+
+commit 64893eb4b178604f9607b4ca36ceeba672737a29
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 21:24:52 2024 +0300
+
+    Better logger
+    
+    cos it works
+
+commit df85855106cac7a66d3e8a1850406403e63fda78
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 20:57:21 2024 +0300
+
+    Created logger for the webserver
+    
+    UTC time format (not local time)
+
+commit 89c5ee71f2d085bf63ff41306b74cb311bcae155
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 20:41:08 2024 +0300
+
+    Unittests finished
+
+commit 1745841f3da53338ddf996c2a6cc9051a5eb586f
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 17:47:54 2024 +0300
+
+    Dependency injection and unittest setup
+
+commit bd8d95b433b30773a494f425b7edbc722cb3eeeb
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Fri Apr 5 00:05:37 2024 +0300
+
+    Docstrings and adjusted num_jobs
+
+commit 108299a307668528334aa0e18d25e888b181ced5
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Thu Apr 4 23:50:56 2024 +0300
+
+    api/jobs endpoint
+
+commit 8cd2938b363ce0db45d2a8af80119895194cbd3a
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Thu Apr 4 22:25:06 2024 +0300
+
+    Graceful shutdown and tweaks in threadpool
+
+commit 9e3fa253ff0ce3b4ba9d45392f77f764fec31199
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Thu Apr 4 21:13:02 2024 +0300
+
+    pylinting and using Pickle instead of JSON
+
+commit 8551ccc835a068a9a29814b7b0ff0688a71f1a2d
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Thu Apr 4 20:46:55 2024 +0300
+
+    Storing results on disk (results folder) instead of RAM
+
+commit bd7e4faed9928e74e5277941158aff5b7607c9d1
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Thu Apr 4 19:40:46 2024 +0300
+
+    Created results directory
+
+commit 74d85b19d764bab680bab0586e5f86c0b2f85ffc
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Wed Apr 3 23:30:53 2024 +0300
+
+    Removed global variables
+
+commit d3433a92e145b1595df741676783c861d4b5f8b2
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Wed Apr 3 23:25:55 2024 +0300
+
+    Bugfixing after pylinting
+
+commit 7614a3fb7305e7a4f4e750571adb7ec9c677cea9
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Wed Apr 3 23:13:58 2024 +0300
+
+    Pylint stuff
+    
+    docstrings, long lines, etc
+
+commit b2bf598b23275c4cfaa724c1b36fcd488a8e9cc8
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Wed Apr 3 22:24:51 2024 +0300
+
+    Implemented all routes for the checker
+
+commit 4b796ac3aa07503dbaa2b10f5ae99c2374dc78f1
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Wed Apr 3 17:48:05 2024 +0300
+
+    Implemented more endpoins
+    
+    Also commented some tests in the checker for unimplemented endpoints
+
+commit eed2666f25fe61c8eaff7f3966251ba8b298135f
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Wed Apr 3 01:18:34 2024 +0300
+
+    Updated threadpool and implemented one endpoint in routes
+
+commit 9bf135e16ff2f8f1c8cca2e99820c43c47a9a40e
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Apr 2 19:24:17 2024 +0300
+
+    Implemented ThreadPool
+
+commit ddf298336929318b46d8e7e9c4bd0c30e5455634
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Apr 2 14:28:13 2024 +0300
+
+    Update nutrition_activity_obesity_usa_subset.csv
+    
+    Formatting so data is readable
+
+commit ed9d574d638a402d7972164b4547d9faf7ade6d6
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Apr 2 14:06:13 2024 +0300
+
+    Updated tests
+
+commit fb2eb2a2954a086fac5882c8fd7bab56d66ea31d
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Apr 2 14:05:22 2024 +0300
+
+    Updated checker
+
+commit 79657b214e3fb9db6374da22999e8c6a606bfa60
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Apr 2 14:00:42 2024 +0300
+
+    Updated checker
+
+commit 90ef38315828d914a054cca21dcf4cb8f254e9fc
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 23:44:18 2024 +0200
+
+    Deleted TODO
+
+commit 6bca3073aac47fd5f515badb802ccff203a36284
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 23:37:50 2024 +0200
+
+    Parsed data in DataIngestor
+
+commit cf27a28e0f0ff8befb1ea1a6dff66ff0ba8a768f
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 20:07:22 2024 +0200
+
+    Guess venv is different from pycharm
+
+commit dd9f56a8899bfcde53983f892747dd20b0cb1792
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 15:47:48 2024 +0200
+
+    Adjusted columns so data is readable
+
+commit 7c199e593850040780d1a9d5337df8f79e8f9c32
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 14:35:25 2024 +0200
+
+    Bit more formatting in checker
+
+commit a635202fcdb52ff5bb715ccd2654aab81b3eae1d
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 14:27:23 2024 +0200
+
+    Fixed imports and some formatting
+
+commit 3f8c10f476c98e1fadffe21600476ebf11b921ee
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 14:15:16 2024 +0200
+
+    Added skeleton to repo
+
+commit 809f477ac5f7bb27d1aff92cdae0f11ebaa977bd
+Author: Lucas Lazaroiu <73948966+luksy26@users.noreply.github.com>
+Date:   Tue Mar 26 14:13:58 2024 +0200
+
+    Initial commit

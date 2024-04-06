@@ -62,7 +62,7 @@ omise.
 Git
 -
 1. https://github.com/luksy26/Le-Stats-Sportif - momentan este privat.
-2. folderul git se afla in arhiva si se pot gasi commit-urile.
+2. fisierul git-log se afla in arhiva si se pot gasi commit-urile.
 
 Structura Arhivei
 -
@@ -77,8 +77,8 @@ Structura Arhivei
     - README_testing.md
     - small_dict.json
     - TestWebserver.py
-  - \_\_init\_\_.py
+  - api_server.py
   - README
-  - git
+  - git-log
 
     
