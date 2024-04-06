@@ -824,7 +824,7 @@ def index():
     # Display each route as a separate HTML <p> tag
     paragraphs = ""
     for route in routes:
-        paragraphs += f"<p>{route}</p>"
+        paragraphs = "".join([f"<p>{route}</p>" for route in routes])
 
     msg += paragraphs
     return msg
