@@ -55,27 +55,3 @@ Resurse utilizate
 * Forumul temei pentru neclaritati/sugestii ce nu se gaseau in enunt.
 * Alte surse pentru lucruri simplistice despre sintaxa python, diverse module si structuri de date. Consider ca pot fi
 omise.
-
-Git
--
-1. https://github.com/luksy26/Le-Stats-Sportif - momentan este privat.
-2. fisierul git-log se afla in arhiva si se pot gasi commit-urile.
-
-Structura Arhivei
--
-
-- root
-  - app
-    - \_\_init\_\_.py
-    - data_ingestor.py
-    - routes.py
-    - task_runner.py
-  - unittests
-    - README_testing.md
-    - small_dict.json
-    - TestWebserver.py
-  - api_server.py
-  - README
-  - git-log
-
-    
